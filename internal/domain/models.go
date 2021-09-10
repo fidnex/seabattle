@@ -12,10 +12,11 @@ const (
 )
 
 const (
-	Nothing = 0
-	Missed  = 1
-	Hit     = 2
-	Ship    = 3
+	Nothing = 0 // непонятно
+	Missed  = 1 // был выстрел, промах
+	Hit     = 2 // попал в корабль
+	Ship    = 3 // корабль (пользователя)
+	Drowned = 4 // корабль (врага)
 )
 
 type Game struct {

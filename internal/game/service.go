@@ -50,6 +50,9 @@ func (s *Service) Shot(chatID string, shoot *domain.Shoot) bool {
 		internalGame.UserIDTurn = enemyID
 	case domain.Ship:
 		field[shoot.X][shoot.Y] = domain.Hit
+		if ok := s.shipIsDrowned(field, shoot); ok {
+			field = s.drownShip(field, shoot)
+		}
 	default:
 		return false
 	}
@@ -147,4 +150,196 @@ func (s *Service) getEnemyID(game *domain.Game, userID string) string {
 	}
 
 	return game.Player1.UserID
+}
+
+func (s *Service) shipIsDrowned(field [10][10]int, shoot *domain.Shoot) bool {
+	// если вокруг выстрела нет троек, то значит пизда кораблю
+	var i = 0
+	iterateShip := true
+	for iterateShip {
+		i++
+		iterateShip = false
+		if shoot.X-i >= 0 {
+			val := field[shoot.X-i][shoot.Y]
+
+			if val == domain.Ship {
+				return false
+			}
+
+			if val == domain.Hit {
+				iterateShip = true
+			}
+		}
+
+		if shoot.X+i <= 9 {
+			val := field[shoot.X+i][shoot.Y]
+
+			if val == domain.Ship {
+				return false
+			}
+
+			if val == domain.Hit {
+				iterateShip = true
+			}
+		}
+
+		if iterateShip {
+			continue
+		}
+	}
+
+	i = 0
+	iterateShip = true
+	for iterateShip {
+		i++
+		iterateShip = false
+		if shoot.Y-i >= 0 {
+			val := field[shoot.X][shoot.Y-i]
+
+			if val == domain.Ship {
+				return false
+			}
+
+			if val == domain.Hit {
+				iterateShip = true
+			}
+		}
+
+		if shoot.Y+i <= 9 {
+			val := field[shoot.X][shoot.Y+i]
+			if val == domain.Ship {
+				return false
+			}
+
+			if val == domain.Hit {
+				iterateShip = true
+			}
+		}
+	}
+
+	return true
+}
+
+func (s *Service) drownShip(field [10][10]int, shoot *domain.Shoot) [10][10]int {
+	isHorizontal := func() bool {
+		val := shoot.Y - 1
+
+		if val >= 0 && field[shoot.X][val] == domain.Hit {
+			return true
+		}
+
+		val = shoot.Y + 1
+		if val <= 9 && field[shoot.X][val] == domain.Hit {
+			return true
+		}
+		return false
+	}()
+
+	isVertical := func() bool {
+		val := shoot.X - 1
+
+		if val >= 0 && field[val][shoot.Y] == domain.Hit {
+			return true
+		}
+
+		val = shoot.X + 1
+		if val <= 9 && field[val][shoot.Y] == domain.Hit {
+			return true
+		}
+
+		return false
+	}()
+
+	fillCell := func(x, y int) {
+		if x > 9 || x < 0 {
+			return
+		}
+
+		if y > 9 || y < 0 {
+			return
+		}
+
+		if field[x][y] == domain.Nothing {
+			field[x][y] = domain.Missed
+		}
+	}
+
+	outline := func(x, y int) {
+		fillCell(x+1, y-1)
+		fillCell(x+1, y)
+		fillCell(x+1, y+1)
+
+		fillCell(x, y-1)
+		fillCell(x, y+1)
+
+		fillCell(x-1, y-1)
+		fillCell(x-1, y)
+		fillCell(x-1, y+1)
+	}
+
+	outline(shoot.X, shoot.Y)
+
+	// вертикальный кораблик
+	if isVertical {
+		i := 0
+		for {
+			i++
+			val := shoot.X + i
+			if val <= 9 {
+				if field[val][shoot.Y] == domain.Hit {
+					outline(val, shoot.Y)
+				} else {
+					break
+				}
+			} else {
+				break
+			}
+		}
+
+		i = 0
+		for {
+			i++
+			val := shoot.X - i
+			if val >= 0 {
+				if field[val][shoot.Y] == domain.Hit {
+					outline(val, shoot.Y)
+				} else {
+					break
+				}
+			} else {
+				break
+			}
+		}
+	}
+
+	// горизонтальный кораблик
+	if isHorizontal {
+		i := 0
+		for {
+			i++
+			val := shoot.Y + i
+			if val <= 9 {
+				if field[shoot.X][val] == domain.Hit {
+					outline(shoot.X, val)
+				} else {
+					break
+				}
+			}
+		}
+
+		i = 0
+		for {
+			i++
+			val := shoot.Y - i
+			if val >= 0 {
+				if field[shoot.X][val] == domain.Hit {
+					outline(shoot.X, val)
+				} else {
+					break
+				}
+			}
+		}
+	}
+
+	return field
 }
