@@ -9,13 +9,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/websocket"
 	"seabattle/internal/chat"
 	"seabattle/internal/game"
 	"seabattle/internal/repo"
+
+	"github.com/gorilla/websocket"
 )
 
-var addr = flag.String("addr", ":8080", "http service address")
+var addr = flag.String("addr", ":38080", "http service address")
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
@@ -38,8 +39,9 @@ func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
-	err := http.ListenAndServeTLS(*addr, "ca-cert.pem", "ca-key.pem", nil)
-	if err != nil {
+
+	//err := http.ListenAndServeTLS(*addr, "ca-cert.pem", "ca-key.pem", nil)
+	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
 }
