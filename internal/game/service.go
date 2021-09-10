@@ -13,13 +13,19 @@ type Service struct {
 	repo *repo.Repo
 }
 
-func (s *Service) GetGameForUser(chatID, userID string) *domain.UserGame {
+func (s *Service) GetGame(chatID, userID string) *domain.Game {
 	internalGame, _ := s.repo.GetGame(chatID)
 
 	if internalGame == nil {
 		internalGame = NewGame(chatID, userID)
 		_ = s.repo.SaveGame(internalGame)
 	}
+
+	return internalGame
+}
+
+func (s *Service) GetGameForUser(chatID, userID string) *domain.UserGame {
+	internalGame := s.GetGame(chatID, userID)
 
 	return &domain.UserGame{
 		State: s.getGameStateForUser(internalGame, userID),
@@ -28,8 +34,12 @@ func (s *Service) GetGameForUser(chatID, userID string) *domain.UserGame {
 	}
 }
 
-func (s *Service) Shot(chatID string, shoot *domain.Shoot) {
+func (s *Service) Shot(chatID string, shoot *domain.Shoot) bool {
 	internalGame, _ := s.repo.GetGame(chatID)
+	if internalGame.UserIDTurn != shoot.UserID {
+		return false
+	}
+
 	field := s.findEnemyMap(internalGame, shoot.UserID)
 
 	enemyID := s.getEnemyID(internalGame, shoot.UserID)
@@ -40,8 +50,40 @@ func (s *Service) Shot(chatID string, shoot *domain.Shoot) {
 		internalGame.UserIDTurn = enemyID
 	case domain.Ship:
 		field[shoot.X][shoot.Y] = domain.Hit
+	default:
+		return false
 	}
 
+	s.setUserField(internalGame, enemyID, field)
+	_ = s.repo.SaveGame(internalGame)
+
+	return true
+}
+
+func (s *Service) NewPlayer(chatID, userID string) {
+	game := s.GetGame(chatID, userID)
+
+	if game.Player1.UserID == userID {
+		return
+	}
+
+	if game.Player2.UserID == userID {
+		return
+	}
+
+	if game.Player1.UserID == "" {
+		game.Player1.UserID = userID
+	}
+
+	if game.Player2.UserID == "" {
+		game.Player2.UserID = userID
+	}
+
+	if game.UserIDTurn == "" {
+		game.UserIDTurn = userID
+	}
+
+	_ = s.repo.SaveGame(game)
 }
 
 func (s *Service) findOurMap(game *domain.Game, userID string) [10][10]int {
@@ -53,7 +95,7 @@ func (s *Service) findOurMap(game *domain.Game, userID string) [10][10]int {
 }
 
 func (s *Service) findEnemyMap(game *domain.Game, userID string) [10][10]int {
-	if game.Player1.UserID != userID {
+	if game.Player1.UserID == userID {
 		return game.Player2.Map
 	}
 
@@ -63,6 +105,7 @@ func (s *Service) findEnemyMap(game *domain.Game, userID string) [10][10]int {
 func (s *Service) setUserField(game *domain.Game, userID string, field [10][10]int) {
 	if game.Player1.UserID == userID {
 		game.Player1.Map = field
+		return
 	}
 
 	game.Player2.Map = field

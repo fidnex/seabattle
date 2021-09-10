@@ -51,6 +51,15 @@ func NewClient(room *Room, conn *websocket.Conn, userID string) *Client {
 }
 
 func (c *Client) Run() {
+	if c.Room.Player1 != nil && c.userID == c.Room.Player1.userID {
+		c.conn.Close()
+		return
+	}
+	if c.Room.Player2 != nil && c.userID == c.Room.Player2.userID {
+		c.conn.Close()
+		return
+	}
+
 	c.Room.register <- c
 	go c.writePump()
 	go c.readPump()

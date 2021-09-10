@@ -10,7 +10,8 @@ import (
 
 func NewGame(chatID string, userID string) *domain.Game {
 	return &domain.Game{
-		ChatID: chatID,
+		ChatID:     chatID,
+		UserIDTurn: userID,
 		Player1: domain.Player{
 			UserID: userID,
 			Map:    generateMap(),
