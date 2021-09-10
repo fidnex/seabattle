@@ -2,6 +2,8 @@ package domain
 
 type State string
 
+const AreaSize = 10 // Размер матрицы
+
 const (
 	Win   = State("win")
 	Loose = State("loose")
@@ -25,14 +27,14 @@ type Game struct {
 }
 
 type UserGame struct {
-	State State       `json:"state"`
-	You   [10][10]int `json:"you"`
-	Enemy [10][10]int `json:"enemy"`
+	State State                   `json:"state"`
+	You   [AreaSize][AreaSize]int `json:"you"`
+	Enemy [AreaSize][AreaSize]int `json:"enemy"`
 }
 
 type Player struct {
 	UserID string
-	Map    [10][10]int
+	Map    [AreaSize][AreaSize]int
 }
 
 type Shoot struct {
