@@ -58,6 +58,11 @@ func (s *Service) Shot(chatID string, shoot *domain.Shoot) bool {
 	}
 
 	s.setUserField(internalGame, enemyID, field)
+
+	if win := s.isUserWin(field); win {
+		internalGame.Winner = shoot.UserID
+	}
+
 	_ = s.repo.SaveGame(internalGame)
 
 	return true
@@ -324,6 +329,8 @@ func (s *Service) drownShip(field [10][10]int, shoot *domain.Shoot) [10][10]int 
 				} else {
 					break
 				}
+			} else {
+				break
 			}
 		}
 
@@ -337,9 +344,23 @@ func (s *Service) drownShip(field [10][10]int, shoot *domain.Shoot) [10][10]int 
 				} else {
 					break
 				}
+			} else {
+				break
 			}
 		}
 	}
 
 	return field
+}
+
+func (s *Service) isUserWin(field [10][10]int) bool {
+	for i := range field {
+		for j := range field[i] {
+			if field[i][j] == domain.Ship {
+				return false
+			}
+		}
+	}
+
+	return true
 }
