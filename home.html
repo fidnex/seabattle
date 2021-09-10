@@ -29,7 +29,10 @@ window.onload = function () {
     };
 
     if (window["WebSocket"]) {
-        conn = new WebSocket("ws://" + document.location.host + "/ws");
+        var url = new URL(location.href);
+        var userId = url.searchParams.get("userId");
+
+        conn = new WebSocket("wss://" + document.location.host + "/ws?chatId=321&userId="+userId);
         conn.onclose = function (evt) {
             var item = document.createElement("div");
             item.innerHTML = "<b>Connection closed.</b>";

@@ -38,7 +38,7 @@ func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
-	err := http.ListenAndServe(*addr, nil)
+	err := http.ListenAndServeTLS(*addr, "ca-cert.pem", "ca-key.pem", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
@@ -47,16 +47,21 @@ func main() {
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 // serveWs handles websocket requests from the peer.
 func serveWs(hub *chat.Hub, w http.ResponseWriter, r *http.Request) {
-	userID := r.Header.Get("X-UserId")
-	chatID := r.Header.Get("X-ChatId")
+	q := r.URL.Query()
+	userID := q.Get("userId")
+	chatID := q.Get("chatId")
 
-	if userID != "" || chatID != "" {
+	if userID == "" || chatID == "" {
 		w.WriteHeader(http.StatusForbidden)
-		_, _ = w.Write([]byte(`want X-UserId and X-ChatId headers`))
+		_, _ = w.Write([]byte(`want userId and chatId params`))
+		return
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)

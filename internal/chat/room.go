@@ -44,41 +44,40 @@ func (h *Room) Run() {
 	for {
 		select {
 		case client := <-h.register:
-			// если он уже есть в комнате, закрыть старое соединение и работать с новым
-			if h.Player1 != nil && h.Player1.userID == client.userID {
-				h.Player1.conn.Close()
-				close(h.Player1.send)
-			}
-
-			if h.Player2 != nil && h.Player2.userID == client.userID {
-				h.Player2.conn.Close()
-				close(h.Player2.send)
-			}
-
 			if h.Player1 == nil {
 				h.Player1 = client
-			}
-
-			if h.Player2 == nil {
+			} else {
 				h.Player2 = client
 			}
 
+			h.game.NewPlayer(h.chatID, client.userID)
 			gameForUser := h.game.GetGameForUser(h.chatID, client.userID)
 			bytes, _ := json.Marshal(gameForUser)
 			client.send <- bytes
 		case client := <-h.unregister:
 			if h.Player1 != nil && h.Player1.userID == client.userID {
-				h.Player1.conn.Close()
 				close(h.Player1.send)
+				h.Player1 = nil
 			}
 
 			if h.Player2 != nil && h.Player2.userID == client.userID {
-				h.Player2.conn.Close()
 				close(h.Player2.send)
+				h.Player2 = nil
 			}
-
 		case shot := <-h.shot:
-			h.game.Shot(h.chatID, shot)
+			if ok := h.game.Shot(h.chatID, shot); ok {
+				if h.Player1 != nil {
+					gameForUser := h.game.GetGameForUser(h.chatID, h.Player1.userID)
+					bytes, _ := json.Marshal(gameForUser)
+					h.Player1.send <- bytes
+				}
+
+				if h.Player2 != nil {
+					gameForUser := h.game.GetGameForUser(h.chatID, h.Player2.userID)
+					bytes, _ := json.Marshal(gameForUser)
+					h.Player2.send <- bytes
+				}
+			}
 		}
 	}
 }
