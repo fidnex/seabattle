@@ -16,7 +16,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var addr = flag.String("addr", ":38080", "http service address")
+var (
+	addr = flag.String("addr", ":38080", "http service address")
+
+	redisAddr     = flag.String("redis.addr", "localhost:6379", "redis service address")
+	redisPassword = flag.String("redis.password", "", "redis password")
+	redisDB       = flag.Int("redis.db", 0, "redis db number")
+)
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
@@ -33,7 +39,16 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
-	hub := chat.NewHub(game.New(repo.New()))
+
+	r, err := repo.New(*redisAddr, *redisPassword, *redisDB)
+	if err != nil {
+		log.Fatal("Repository init fail: ", err)
+	}
+	defer func() {
+		_ = r.Close()
+	}()
+
+	hub := chat.NewHub(game.New(r))
 
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
