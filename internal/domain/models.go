@@ -6,7 +6,7 @@ const AreaSize = 10 // Размер матрицы
 
 const (
 	Win   = State("win")
-	Loose = State("loose")
+	Loose = State("lose")
 	You   = State("you")
 	Enemy = State("enemy")
 )
