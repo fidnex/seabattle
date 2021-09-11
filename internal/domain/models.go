@@ -20,11 +20,11 @@ const (
 )
 
 type Game struct {
-	Winner     string
-	UserIDTurn string
-	ChatID     string
-	Player1    Player
-	Player2    Player
+	Winner     string `json:"winner"`
+	UserIDTurn string `json:"userIDTurn"`
+	ChatID     string `json:"chatID"`
+	Player1    Player `json:"player1"`
+	Player2    Player `json:"player2"`
 }
 
 type UserGame struct {
@@ -34,8 +34,8 @@ type UserGame struct {
 }
 
 type Player struct {
-	UserID string
-	Map    [AreaSize][AreaSize]int
+	UserID string                  `json:"userID"`
+	Map    [AreaSize][AreaSize]int `json:"map"`
 }
 
 type Shoot struct {
