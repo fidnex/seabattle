@@ -158,7 +158,6 @@ func (s *Service) getEnemyID(game *domain.Game, userID string) string {
 }
 
 func (s *Service) shipIsDrowned(field [10][10]int, shoot *domain.Shoot) bool {
-	// если вокруг выстрела нет троек, то значит пизда кораблю
 	var i = 0
 	iterateShip := true
 	for iterateShip {
@@ -175,7 +174,13 @@ func (s *Service) shipIsDrowned(field [10][10]int, shoot *domain.Shoot) bool {
 				iterateShip = true
 			}
 		}
+	}
 
+	i = 0
+	iterateShip = true
+	for iterateShip {
+		i++
+		iterateShip = false
 		if shoot.X+i <= 9 {
 			val := field[shoot.X+i][shoot.Y]
 
@@ -186,10 +191,6 @@ func (s *Service) shipIsDrowned(field [10][10]int, shoot *domain.Shoot) bool {
 			if val == domain.Hit {
 				iterateShip = true
 			}
-		}
-
-		if iterateShip {
-			continue
 		}
 	}
 
@@ -209,7 +210,13 @@ func (s *Service) shipIsDrowned(field [10][10]int, shoot *domain.Shoot) bool {
 				iterateShip = true
 			}
 		}
+	}
 
+	i = 0
+	iterateShip = true
+	for iterateShip {
+		i++
+		iterateShip = false
 		if shoot.Y+i <= 9 {
 			val := field[shoot.X][shoot.Y+i]
 			if val == domain.Ship {
