@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  seabattle:
+    build: .
+    ports:
+      - "8882:38080"
+    command: /socket -redis.addr redis:6379
+  redis:
+    image: "redis:alpine"
